@@ -1,7 +1,24 @@
+
+in_file = ''
+command = ''
+source = ''
+destiny = ''
+
+def read_input():
+    global in_file, command, source, destiny
+    cmd_line = input()
+    cmd_line = cmd_line.split(' ')
+    in_file = cmd_line[0]
+    command = cmd_line[1]
+    source = cmd_line[2]
+    destiny = cmd_line[3]
+    
+read_input()
+
 nodes = []
 routers = []
 routertable = []
-with open('topologia.txt', 'r') as file:
+with open(in_file, 'r') as file:
     lines = file.readlines()
     lines = [line.strip() for line in lines]
     for line in lines:
@@ -44,17 +61,32 @@ for n in nodes:
 
 
 class Router():
-    def __init__(self, router_name, num_ports, mac, ip_prefix):
+    def __init__(self, router_name, num_ports, mac_iprefix):
         self.router_name = router_name
         self.num_ports = num_ports
-        self.mac = mac
-        self.ip_prefix = ip_prefix
+        self.mac_iprefix = mac_iprefix
         
     def print_router(self):
-        print(self.router_name, self.num_ports, self.mac, self.ip_prefix)
+        print(self.router_name, self.num_ports, self.mac_iprefix)
 
 routers = [r.split(',') for r in routers]
-routers = [Router(r[0],r[1],r[2],r[3]) for r in routers]
+mac_ip = []
+for r in routers:
+    mac_ip.append(r[2:])
+
+mac_ip = mac_ip[0]
+macs = []
+ips = []
+
+for mi in mac_ip:
+    if mi.__contains__(':'):
+        macs.append(mi)
+    else:
+        ips.append(mi)
+
+mac_ip = [(mac,ip) for mac,ip in zip(macs, ips)]
+
+routers = [Router(r[0],r[1], mac_ip) for r in routers]
 print('Routers')
 for r in routers:
     r.print_router()
