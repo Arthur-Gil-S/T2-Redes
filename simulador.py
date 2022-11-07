@@ -1,17 +1,18 @@
 
+import sys
+
 in_file = ''
 command = ''
-source = ''
+source  = ''
 destiny = ''
 
 def read_input():
     global in_file, command, source, destiny
-    cmd_line = input()
-    cmd_line = cmd_line.split(' ')
-    in_file = cmd_line[0]
-    command = cmd_line[1]
-    source = cmd_line[2]
-    destiny = cmd_line[3]
+
+    in_file = sys.argv[1]
+    command = sys.argv[2]
+    source = sys.argv[3]
+    destiny = sys.argv[4]
     
 read_input()
 
@@ -55,9 +56,9 @@ class Node():
     
 nodes = [n.split(',') for n in nodes]    
 nodes = [Node(n[0],n[1],n[2],n[3]) for n in nodes]
-print('Nodes')
-for n in nodes:
-    n.print_node()
+# print('Nodes')
+# for n in nodes:
+#     print(n.node_name)
 
 
 class Router():
@@ -87,9 +88,9 @@ for mi in mac_ip:
 mac_ip = [(mac,ip) for mac,ip in zip(macs, ips)]
 
 routers = [Router(r[0],r[1], mac_ip) for r in routers]
-print('Routers')
-for r in routers:
-    r.print_router()
+# print('Routers')
+# for r in routers:
+#     r.print_router()
 
 
 class Routertable():
@@ -104,7 +105,28 @@ class Routertable():
 
 routertable = [rt.split(',') for rt in routertable]
 routertable = [Routertable(rt[0],rt[1],rt[2],rt[3]) for rt in routertable]
-print('Routertable')
-for rt in routertable:
-    rt.print_routertable()
+# print('Routertable')
+# for rt in routertable:
+#     rt.print_routertable()
 
+
+def icmp_echo_request(x, y): #origem/destino
+    src_ip = ''
+    dst_ip = ''
+    ttl = 8
+    
+    if x.startswith('n'): # se a origem é um nodo
+        for n in nodes:
+            if n.node_name == x:
+                src_ip = n.ip_prefix.split('/')[0]
+    
+    if y.startswith('n'): # se o destino é um nodo
+        for n in nodes:
+            if n.node_name == y:
+                dst_ip = n.ip_prefix.split('/')[0]
+    
+    package = f'{source} ->> {destiny} : ICMP Echo Request<br/>src={src_ip} dst={dst_ip} ttl={ttl}'
+    return package
+
+result = icmp_echo_request(source, destiny)
+print(result)
