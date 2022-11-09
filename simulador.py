@@ -45,11 +45,15 @@ with open(in_file, 'r') as file:
 
 
 class Node():
+    arp_table = {}
     def __init__(self, node_name, mac, ip_prefix, gateway):
         self.node_name = node_name
         self.mac = mac
         self.ip_prefix = ip_prefix
         self.gateway = gateway
+
+    def update_arp_table(self, ip, mac):
+        self.arp_table.update({ip:mac})
 
     def print_node(self):
         print(self.node_name, self.mac, self.ip_prefix, self.gateway)
@@ -62,10 +66,14 @@ nodes = [Node(n[0],n[1],n[2],n[3]) for n in nodes]
 
 
 class Router():
+    arp_table = {}
     def __init__(self, router_name, num_ports, mac_iprefix):
         self.router_name = router_name
         self.num_ports = num_ports
         self.mac_iprefix = mac_iprefix
+
+    def update_arp_table(self, ip, mac):
+        self.arp_table.update({ip:mac})
         
     def print_router(self):
         print(self.router_name, self.num_ports, self.mac_iprefix)
@@ -128,5 +136,74 @@ def icmp_echo_request(x, y): #origem/destino
     package = f'{source} ->> {destiny} : ICMP Echo Request<br/>src={src_ip} dst={dst_ip} ttl={ttl}'
     return package
 
-result = icmp_echo_request(source, destiny)
+# result = icmp_echo_request(source, destiny)
+# print(result)
+
+def icmp_echo_reply(x, y):
+    src_ip = ''
+    dst_ip = ''
+    ttl = 8
+
+    if x.startswith('n'): # se a origem é um nodo
+        for n in nodes:
+            if n.node_name == x:
+                src_ip = n.ip_prefix.split('/')[0]
+    
+    if y.startswith('n'): # se o destino é um nodo
+        for n in nodes:
+            if n.node_name == y:
+                dst_ip = n.ip_prefix.split('/')[0]
+
+    package = f'{y} --> {x} : ICMP Echo Reply<br/>src={dst_ip} dst={src_ip} ttl={ttl}'
+    return package
+
+# arp table n1 - ip/mac
+# n1 -> r1
+# n1 pede o mac do r1
+# atualiza tabela arp de n1 com ip e mac do r1
+
+def arp_request(x, y):
+    src_ip = ''
+    dst_ip = ''
+
+    if x.startswith('n') and y.startswith('n'):
+        for n in nodes:
+            if n.node_name == x:
+                x = n
+            if n.node_name == y:
+                y = n
+        src_ip = x.ip_prefix.split('/')[0]
+        dst_ip = y.ip_prefix.split('/')[0]
+
+        #primeiro caso - n1 e n2 estão na mesma rede
+        # n1 envia arp request para n2
+
+        y.update_arp_table(x.ip_prefix, x.mac) #atualiza arp table de n2
+
+    package = f'Note over {x.node_name} : ARP Request<br/>Who has {dst_ip}? Tell {src_ip}'
+    return package
+
+
+def arp_reply(x, y):
+    src_ip = ''
+    src_mac = ''
+
+    if y.startswith('n'):
+        for n in nodes:
+            if n.node_name == y:
+                src_ip = n.ip_prefix.split('/')[0]
+                src_mac = n.mac
+    
+    package = f'{y} --> {x} : ARP Reply<br/>{src_ip} is at {src_mac}'
+    return package
+
+def ping(x, y):
+    result = ''
+    result += arp_request(x, y) + '\n'
+    result += arp_reply(x, y) + '\n'
+    result += icmp_echo_request(x, y) + '\n'
+    result += icmp_echo_reply(x, y) + '\n'
+    return result
+
+result = ping(source, destiny)
 print(result)
